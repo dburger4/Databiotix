@@ -1,5 +1,9 @@
 const month = 2628000000000 //month in epoch time
 
+// common words that will be excluded from most common searched terms, feel free to add to this list
+let commonWords = new Set(['who', 'what', 'when', 'where', 'why', 'how', 'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 'i', 'it', 'for', 'not', 'on', 'with', 'as',
+                    'you', 'do', 'at', 'this', 'but', 'by', 'from', 'or','will', 'an', 'my', 'would', 'if', 'is'])
+
 let allBrowHist = require("./BrowserHistory.json") // converts json file to js object
 let googSearch = allBrowHist['Browser History'].filter(d => d.title.includes(" - Google Search")) //filters out everything that isnt a google search
 
@@ -20,7 +24,7 @@ for(var i = 0; i < 997; i++) {
 
 let uniqAllTermsArr = allTermsArr.filter((v,i) => allTermsArr.indexOf(v) === i) // array of all unique search terms (words)
 
-let SearchTermFreq = { //object of key value pairs. key=search term, value=frequency
+let SearchTermFreq = { //empty object of key value pairs. key=search term, value=frequency
 
 }
 
@@ -34,14 +38,44 @@ for (i = 0; i < allTermsArr.length; i++) {
     SearchTermFreq[allTermsArr[i]] += 1
 }
 
-console.log(SearchTermFreq)
+// function to return the top n searches from an object of key-value (term-frequency) pairs 
+function top_searches(SearchTermFreq, commonWords, n) { //parameters are object dict, set, int
+    let topn = []
 
-// console.log(numSearches)
+    var SearchTermFreq2d = Object.keys(SearchTermFreq).map(function(key) { // stackoverflow method to convert dict to 2d array
+        return [key, SearchTermFreq[key]]
+    })
 
-// console.log("startTime:")
-// console.log(startTime)
+    SearchTermFreq2d.sort(compareSecondColumn);
 
-// console.log("endTime:")
-// console.log(endTime)
+    function compareSecondColumn(a, b) {
+        if (a[1] === b[1]) {
+            return 0;
+        }
+        else {
+            return (a[1] > b[1]) ? -1 : 1;
+        }
+    }
+
+    // THIS CAN INFINITE LOOP IF USER ONLY EVER SEARCHES COMMON WORDS INTO GOOGLE OR DOES NOT SEARCH ENOUGH SIGNIFICANT TERMS, BUT I DONT HAVE THE TIME OR ENERGY TO WRITE CHECKS FOR IT
+    let count = 0
+    let index = 0
+    while (count < n) { // creates 2d array of n length, EXCLUDING common english words
+        // console.log(SearchTermFreq2d[index][0])
+        if (!(commonWords.has(SearchTermFreq2d[index][0]))) { 
+            topn.push(SearchTermFreq2d[index])
+            count++
+        }
+        index++
+    }
+
+    return topn //2d array of searched terms in order of greatest to least, first dimension is searched term, second is frequency
+}
+  
+
+console.log(SearchTermFreq) // prints full dictionary of terms and frequencies
+console.log(top_searches(SearchTermFreq, commonWords, 20)) //prints top 20 searched terms with popular english words filtered out
+
+
 
 
